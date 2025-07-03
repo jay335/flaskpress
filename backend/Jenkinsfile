@@ -1,33 +1,58 @@
 pipeline {
-  agent any
+    agent any
 
-  stages {
-    stage('Clone Repo') {
-      steps {
-        echo 'Cloning repository...'
-      }
+    environment {
+        APP_DIR = "backend"
+        VENV_PATH = "${APP_DIR}/venv"
+        APP_NAME = "flask-backend"
     }
 
-    stage('Activate venv and Install Dependencies') {
-      steps {
-        sh '''
-          cd backend
-          if [ ! -d "venv" ]; then python3 -m venv venv; fi
-          . venv/bin/activate
-          pip install -r requirements.txt
-        '''
-      }
+    options {
+        timestamps()
+        skipDefaultCheckout()
+        durabilityHint('PERFORMANCE_OPTIMIZED')
     }
 
-    stage('Restart Flask App using PM2') {
-      steps {
-        sh '''
-          cd backend
-          . venv/bin/activate
-          pm2 restart flask-backend || pm2 start app.py --name flask-backend --interpreter ./venv/bin/python
-        '''
-      }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Prepare Environment') {
+            steps {
+                dir(APP_DIR) {
+                    sh '''
+                    if [ ! -d "venv" ]; then
+                        python3 -m venv venv
+                        . venv/bin/activate
+                        pip install --upgrade pip
+                        pip install -r requirements.txt
+                    else
+                        echo "Virtual environment already exists. Skipping pip install."
+                    fi
+                    '''
+                }
+            }
+        }
+
+        stage('Restart App if Needed') {
+            steps {
+                dir(APP_DIR) {
+                    sh '''
+                    CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -c '^')
+                    if [ "$CHANGED" -gt 0 ]; then
+                        . venv/bin/activate
+                        pm2 restart ${APP_NAME} || pm2 start app.py --name ${APP_NAME}
+                        echo "Changes detected. App restarted."
+                    else
+                        echo "No code changes. Skipping restart."
+                    fi
+                    '''
+                }
+            }
+        }
     }
-  }
 }
 
