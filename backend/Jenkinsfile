@@ -1,0 +1,33 @@
+pipeline {
+  agent any
+
+  stages {
+    stage('Clone Repo') {
+      steps {
+        echo 'Cloning repository...'
+        // Already done by Jenkins SCM
+      }
+    }
+
+    stage('Activate venv and Install Dependencies') {
+      steps {
+        sh '''
+          cd backend
+          if [ ! -d "venv" ]; then python3 -m venv venv; fi
+          source venv/bin/activate
+          pip install -r requirements.txt
+        '''
+      }
+    }
+
+    stage('Restart Flask App using PM2') {
+      steps {
+        sh '''
+          cd backend
+          source venv/bin/activate
+          pm2 restart flask-backend || pm2 start app.py --name flask-backend --interpreter ./venv/bin/python
+        '''
+      }
+    }
+  }
+}
