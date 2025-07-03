@@ -1,0 +1,29 @@
+pipeline {
+  agent any
+
+  stages {
+    stage('Clone Repo') {
+      steps {
+        echo 'Cloning repository...'
+      }
+    }
+
+    stage('Install Node Modules') {
+      steps {
+        sh '''
+          cd frontend
+          npm install
+        '''
+      }
+    }
+
+    stage('Restart Express App using PM2') {
+      steps {
+        sh '''
+          cd frontend
+          pm2 restart express-frontend || pm2 start app.js --name express-frontend
+        '''
+      }
+    }
+  }
+}
