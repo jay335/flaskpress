@@ -16,7 +16,7 @@ app.post("/submit", async (req, res) => {
   try {
     const { name, email } = req.body;
         await axios.post(`${BACKEND_URL}/submit`, { name, email });
-    res.send("Data submitted successfully");
+    res.send("CI/CD SUCCESS: Express app redeployed");
   } catch (err) {
     res.send("Error submitting data to backend");
     console.error("Error submitting data:", err.message);
