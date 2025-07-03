@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
@@ -9,10 +10,12 @@ const PORT = 3000;
 app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.urlencoded({ extended: true }));
 
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5000";
+
 app.post("/submit", async (req, res) => {
   try {
     const { name, email } = req.body;
-    await axios.post("http://backend-flaskpress:5000/submit", { name, email });
+        await axios.post(`${BACKEND_URL}/submit`, { name, email });
     res.send("Data submitted successfully");
   } catch (err) {
     res.send("Error submitting data to backend");
@@ -21,5 +24,6 @@ app.post("/submit", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Frontend running at http://localhost:${PORT}`);
+  console.log(`Frontend running at http://0.0.0.0:${PORT}`);
 });
+
